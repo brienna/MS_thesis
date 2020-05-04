@@ -1,1 +1,2 @@
+data/2020_05_04_abstract_tokens/tokens.npy filter=lfs diff=lfs merge=lfs -text
 *.npy filter=lfs diff=lfs merge=lfs -text
