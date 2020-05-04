@@ -1,2 +1,7 @@
 data/2020_05_04_abstract_tokens/tokens.npy filter=lfs diff=lfs merge=lfs -text
 *.npy filter=lfs diff=lfs merge=lfs -text
+data/2020_03_03_original_arxiv_tars/ filter=lfs diff=lfs merge=lfs -text
+data/2020_03_07_update_tars/ filter=lfs diff=lfs merge=lfs -text
+*.tar filter=lfs diff=lfs merge=lfs -text
+data/2020_03_03_original_arxiv_tars/processed/*.tar filter=lfs diff=lfs merge=lfs -text
+data/2020_03_06_arxiv_metadata_astroph/arxiv_metadata_astroph.csv filter=lfs diff=lfs merge=lfs -text
