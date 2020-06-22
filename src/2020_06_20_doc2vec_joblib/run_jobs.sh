@@ -40,13 +40,13 @@
 
 #SBATCH -t 4-5:0:0
 
-#Put the job in the appropriate partition matching the account and request FOUR cores
+#Put the job in the appropriate partition matching the account and request cores
 
-#SBATCH - A avxiv -p <onboard, tier1, tier2, tier3> -n 4
+#SBATCH - A avxiv -p tier1 --ntasks=16
 
 #Job membory requirements in MB=m (default), GB=g, or TB=t
 
-#SBATCH --mem=3g
+#SBATCH --mem=100g
 
 ######################################################################
 

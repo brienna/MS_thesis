@@ -1,21 +1,30 @@
 import os
+import glob
+import sys
 import numpy as np
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from scipy.spatial.distance import cosine as cosine_distance
 
-def train_and_evaluate(data, triplets, p, model_id):
+FILE_DIR = os.path.dirname(os.path.abspath('__file__'))
+sys.path.append(FILE_DIR)
+
+def train_and_evaluate(triplets, p, model_id):
     vector_size = p['vector_size']
     dm = p['dm']
-    return {model_id: {'parameters': p, 'score': Doc2VecModel(model_id, dm, vector_size).fit(data).evaluate(triplets)}}
+    which_corpus = p['corpus']
+    datapath = os.path.join(FILE_DIR, 'abstracts/' + which_corpus + '/*.npy')
+    data = np.array(glob.glob(datapath))[:1000]
+    return {model_id: {'parameters': p, 'score': Doc2VecModel(model_id, which_corpus, dm, vector_size).fit(data).evaluate(triplets)}}
 
 class Doc2VecModel(object): 
-    def __init__(self, model_id, dm=1, vector_size=100, window=1):
+    def __init__(self, model_id, which_corpus, dm=1, vector_size=100, window=1):
         '''Must match all parameters in my param dict.'''
         self.model = None
         self.model_id = model_id
         self.vector_size = vector_size
         self.window = window
         self.dm = dm
+        self.which_corpus = which_corpus
 
     def fit(self, data):
         self.model = Doc2Vec(vector_size=self.vector_size, 
@@ -31,7 +40,7 @@ class Doc2VecModel(object):
 
     def get_vector(self, doc_id):
         '''Takes a Pandas row for a paper.'''
-        loaded = np.load('/Volumes/BRIENNAKH/Thesis/data/2020_06_09_abstract_tokens/' + doc_id + '.npy')
+        loaded = np.load(os.path.join(FILE_DIR, 'abstracts/' + self.which_corpus + '/' + doc_id + '.npy'))
         return self.model.infer_vector(loaded)
 
     def evaluate(self, triplets):

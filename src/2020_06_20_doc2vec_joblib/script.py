@@ -10,7 +10,6 @@ Issues where I can't update a module once I've used it in the engine, I have to 
 
 import os
 import sys
-import glob
 import pickle
 import logging
 import argparse
@@ -52,24 +51,20 @@ logging.info("c.ids :{0}".format(str(c.ids)))
 bview = c.load_balanced_view()
 register_parallel_backend('ipyparallel', lambda : IPythonParallelBackend(view=bview))
 
-
-# Get data and triplets (we want just the filenames of the preprocessed documents)
-DATAPATH = os.path.join('/Volumes/BRIENNAKH/Thesis/data/2020_06_12_abstract_tokens/numtoken/*.npy')
-data = np.array(glob.glob(DATAPATH))[:1000]
-triplets = np.load('/Volumes/BRIENNAKH/Thesis/results/2020_06_19_doc2vec_1000_docs/100_triplets.npy')
-logging.info('Number of documents: ' + str(len(data)))
-logging.info('Number of triplets: ' + str(len(triplets)))
+# Get evaluation triplets (we want just the filenames of the preprocessed documents)
+triplets = np.load('100_triplets.npy')
 
 # Set parameters to test
 params = {
     'dm': [0, 1],
-    'vector_size': [100, 300]
+    'vector_size': [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+    'corpus': ['numtoken'] 
 }
 
 # Run the code
 start = timer()
 with parallel_backend('ipyparallel'):
-    scores = Parallel(n_jobs=len(c))(delayed(train_and_evaluate)(data, triplets, p, model_id) for model_id, p in enumerate(ParameterGrid(params)))
+    scores = Parallel(n_jobs=len(c))(delayed(train_and_evaluate)(triplets, p, model_id) for model_id, p in enumerate(ParameterGrid(params)))
     scores_formatted = {k: v for d in scores for k, v in d.items()}
     with open('scores.pkl', 'wb') as f:
         pickle.dump(scores_formatted, f, pickle.HIGHEST_PROTOCOL)
