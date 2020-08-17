@@ -5,63 +5,70 @@ import numpy as np
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 from scipy.spatial.distance import cosine as cosine_distance
 
+
 FILE_DIR = os.path.dirname(os.path.abspath('__file__'))
+#CORPUS_DIR = '/Volumes/ARCHIVES/Thesis/data/' # uncomment if using on my local machine
 sys.path.append(FILE_DIR)
 
 def train_and_evaluate(triplets, p):
-    vector_size = p['vector_size']
-    dm = p['dm']
     which_corpus = p['corpus']
-    datapath = os.path.join(FILE_DIR, 'abstracts/' + which_corpus + '/*.npy')
-    data = np.array(glob.glob(datapath))[:1000]
-    return {'score': Doc2VecModel(which_corpus, dm, vector_size).fit(data).evaluate(triplets),
+    corpuspath = os.path.join(FILE_DIR, 'corpus/' + which_corpus + '/*.npy') 
+    #corpuspath = os.path.join(CORPUS_DIR, 'corpus/' + which_corpus + '/*.npy') # uncomment if using on my local machine
+    corpus = np.array(glob.glob(corpuspath))
+    return {'score': Doc2VecModel(p['dm'],
+                                  p['vector_size'], 
+                                  p['epochs'],
+                                  p['window'],
+                                  p['hs'],
+                                  p['min_count']).fit(corpus).evaluate(triplets),
             'parameters': p}
 
 class Doc2VecModel(object): 
-    def __init__(self, which_corpus, dm=1, vector_size=100, window=1):
+    def __init__(self, 
+                 dm,
+                 vector_size,
+                 epochs,
+                 window,
+                 hs,
+                 min_count):
         '''Must match all parameters in my param dict.'''
         self.model = None
-        self.vector_size = vector_size
-        self.window = window
         self.dm = dm
-        self.which_corpus = which_corpus
+        self.vector_size = vector_size
+        self.epochs = epochs
+        self.window = window
+        self.hs = hs
+        self.min_count = min_count
 
-    def fit(self, data):
-        self.model = Doc2Vec(vector_size=self.vector_size, 
+    def fit(self, corpus):
+        tagged_docs = self.DocumentIterator(corpus)
+        self.model = Doc2Vec(dm=self.dm, 
+                             vector_size=self.vector_size, 
+                             epochs=self.epochs,
                              window=self.window, 
-                             dm=self.dm, 
-                             epochs=10,
-                             alpha=0.025, 
+                             hs=self.hs,
+                             min_count=self.min_count,
+                             alpha=0.025,
                              min_alpha=0.001)
-        tagged_docs = self.DocumentIterator(data)
+        tagged_docs = self.DocumentIterator(corpus)
         self.model.build_vocab(tagged_docs)
         self.model.train(tagged_docs, total_examples=self.model.corpus_count, epochs=self.model.epochs)
         return self
 
-    def get_vector(self, doc_id):
-        '''Takes a Pandas row for a paper.'''
-        loaded = np.load(os.path.join(FILE_DIR, 'abstracts/' + self.which_corpus + '/' + doc_id + '.npy'))
-        return self.model.infer_vector(loaded)
-
     def evaluate(self, triplets):
-        '''Calculates averaged accuracy of all given triplets.
-        [accuracy that ab is more similar than ac, ab more similar than bc]'''
-        accuracies = [0, 0]
+        '''Calculates averaged accuracy of all given triplets,
+        that ab is more similar than ac.'''
+        accuracy = 0
         for triplet in triplets:
-            a_vector = self.get_vector(triplet[0])
-            b_vector = self.get_vector(triplet[1])
-            c_vector = self.get_vector(triplet[2])
+            a_vector = self.model.docvecs[triplet[0]]
+            b_vector = self.model.docvecs[triplet[1]]
+            c_vector = self.model.docvecs[triplet[2]]
             ab_dist = cosine_distance(a_vector, b_vector)
             ac_dist = cosine_distance(a_vector, c_vector)
             bc_dist = cosine_distance(b_vector, c_vector)
-            if ab_dist > ac_dist and ab_dist > bc_dist:
-                accuracies[0] += 1
-                accuracies[1] += 1
-            elif ab_dist > ac_dist and ab_dist < bc_dist:
-                accuracies[0] += 1
-            elif ab_dist < ac_dist and ab_dist > bc_dist:
-                accuracies[1] += 1
-        return max([accuracies[0]/len(triplets), accuracies[1]/len(triplets)])
+            if ab_dist > ac_dist:
+                accuracy += 1
+        return accuracy/len(triplets)
 
     class DocumentIterator(object):
         def load_documents(self):

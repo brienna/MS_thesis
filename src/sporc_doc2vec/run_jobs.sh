@@ -30,7 +30,7 @@
 
 # To send emails, set the address below and remove one of the '#' sings
 
-#SBATCH --mail-user=bkh4324@rit.edu
+##SBATCH --mail-user=bkh4324@rit.edu
 
 # notify on state change: BEGIN, END, FAIL, OR ALL
 
@@ -40,7 +40,7 @@
 
 # Request 4 days and 5 hours
 
-#SBATCH -t 3-5:0:0
+#SBATCH -t 2:0:0
 
 #Put the job in the appropriate partition matching the account and request cores (check parameter grid for how many)
 
@@ -52,8 +52,13 @@
 
 ######################################################################
 
+# Load modules
+spack load py-gensim
+spack load py-mpi4py
+spack load py-scikit-learn
+
 # Run 
-srun -n $SLURM_NTASKS --mpi=pmi2 python script.py 
+srun -n $SLURM_NTASKS --mpi=pmix_v3 python script.py 
 
 # IN TERMINAL NAVIGATE TO DIR W/ THIS .SH FILE & TYPE sbatch start_script.sh script.py
 # CHECK WHERE IT IS IN THE QUEUE WITH queue -u bkh4324

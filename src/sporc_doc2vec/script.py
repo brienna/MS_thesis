@@ -1,6 +1,6 @@
 # github.com/jbornschein/mpi4py-examples/blob/master/09-task-pull.py
 
-# mpirun -np 5 python script3.py
+# mpirun -np 5 python script.py
 
 # REQUIRED FILES IN ADDITION TO THIS FILE:
     # triplets.npy 
@@ -25,7 +25,8 @@
 # comm.scatter() is not as convenient in practice cuz it requires the size 
 # of the large array to be divisible by the number of processes
 
-from mpi4py import MPI 
+from mpi4py import MPI
+import os 
 import json
 import numpy as np
 from sklearn.model_selection import ParameterGrid
@@ -42,37 +43,55 @@ def main():
     size = comm.size                # total number of processes
     rank = comm.rank                # Rank of this process
     status = MPI.Status()           # get MPI status object
-    scores = []
     tags = enum('READY', 'DONE', 'EXIT', 'START')
-    triplets = np.load('100_triplets.npy')
+    triplets = np.load('20000_triplets.npy')
+    params = {'dm': [0, 1],
+              'vector_size': [100, 500, 1000, 2500, 5000, 7500, 10000], 
+              'corpus': ['abstracts/basic_preprocessing',
+                         'abstracts/and_stemming',
+                         'abstracts/and_lemmatization',
+                         'abstracts/and_stopword_removal',
+                         'fulltexts/basic_preprocessing',
+                         'fulltexts/and_stemming',
+                         'fulltexts/and_lemmatization',
+                         'fulltexts/and_stopword_removal'],
+              'epochs': [10, 25, 50, 100],
+              'window': [2, 5, 10, 20],
+              'hs': [0, 1],
+              'min_count': [2, 5, 10, 20]}
+    tasks = list(ParameterGrid(params))
+    # Collect scores and remove any tasks that have been completed
+    if os.path.exists('scores.txt'):
+        with open('scores.txt', 'r') as sfile:
+            scores = json.load(sfile)
+            tasks = [x for x in list(ParameterGrid(params)) if x not in [x['parameters'] for x in scores]]
+    else:
+        scores = []
+    
+    task_index = 0
+    num_workers = size - 1
+    closed_workers = 0
 
     if rank == 0: 
         # Master process executes code below
-        params = {'dm': [0, 1],
-              'vector_size': [100, 200], 
-              'corpus': ['numtoken']}
-        tasks = list(ParameterGrid(params))
-        task_index = 0
-        num_workers = size - 1
-        closed_workers = 0
         print('Master starting with %d workers' % num_workers)
 
         while closed_workers < num_workers:
-            score = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+            score = comm.recv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status) 
             source = status.Get_source()
             tag = status.Get_tag()
             if tag == tags.READY:
-                # Worker is ready, so send it a task
-                if task_index < len(tasks):
-                    comm.send(tasks[task_index], dest=source, tag=tags.START)
+                if task_index < len(tasks): # Worker is ready, so send it a task
                     print('Sending task %d to worker %d' % (task_index, source))
+                    comm.send(tasks[task_index], dest=source, tag=tags.START)
                     task_index += 1
                 else:
-                    comm.send(None, dest=source, tag=tags.EXIT)
+                    comm.send(None, dest=source, tag=tags.EXIT) # No more tasks? Tell worker to exit
             elif tag == tags.DONE:
+                print('Worker ' + str(source) + ' has completed, writing model score...')
                 scores.append(score)
-                with open('scores.txt', 'w+') as scores_file: #seems like it is ok w full scores, rewrites?
-                    json.dump(scores, scores_file)
+                with open('scores.txt', 'w+') as sfile: # dump all scores anew
+                    json.dump(scores, sfile)
                 print('Got data from worker %d' % source)
             elif tag == tags.EXIT:
                 print('Worker %d exited.' % source)
@@ -88,8 +107,8 @@ def main():
             tag = status.Get_tag()
             if tag == tags.START:
                 # Do the work here
+                print('Training model with parameters: ' + str(task))
                 score = train_and_evaluate(triplets, task)
-                #score_formatted = {k: v for d in score for k, v in d.items()}
                 comm.send(score, dest=0, tag=tags.DONE)
             elif tag == tags.EXIT:
                 break
