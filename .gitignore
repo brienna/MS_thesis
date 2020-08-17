@@ -1,0 +1,18 @@
+# Large files (not stored on GitHub)
+data/archive
+data/corpus
+data/xml
+data/metadata.csv
+data/conversion_log.csv
+docs
+src/sporc_doc2vec/corpus
+
+# Security 
+config.ini
+notebooks/archived/client_secrets.json
+
+# Other
+geckodriver.log
+globals.p
+results/notes.webloc
+results/results.pdf
