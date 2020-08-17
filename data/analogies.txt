@@ -1,0 +1,6 @@
+: solar-system
+phobos mars titan saturn
+deimos mars europa saturn
+gravitational gravity planetary planet
+gas giant yellow dwarf
+light year moon planet
