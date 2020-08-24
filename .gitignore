@@ -1,11 +1,13 @@
 # Large files (not stored on GitHub)
 data/archive
-data/corpus
+corpus/
+lda/ # large .mm files 
+doc2vec/ 
 data/xml
 data/metadata.csv
 data/conversion_log.csv
 docs
-src/sporc_doc2vec/corpus
+__pycache__
 
 # Security 
 config.ini

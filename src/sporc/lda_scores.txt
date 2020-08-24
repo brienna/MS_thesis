@@ -1,0 +1,1 @@
+{"score": 0.3393, "parameters": {"corpus": "abstracts/and_stopword_removal", "num_topics": 6, "passes": 4}}
