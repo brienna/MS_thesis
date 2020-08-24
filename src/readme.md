@@ -4,5 +4,5 @@
 
 - `bash_practice/` — Practice scripts to understand how to use SLURM and bash. 
 
-- `sporc_doc2vec/` — All the files that I used to run doc2vec on SPORC, minus the corpus.
+- `sporc/` — All the files that I used to train and evaluate doc2vec and LDA on RIT's supercomputer, SPORC, minus the corpus.
 
