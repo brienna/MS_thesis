@@ -3,6 +3,7 @@ import sys
 import glob
 import gensim
 import numpy as np
+import multiprocessing as mp
 
 FILE_DIR = os.path.dirname(os.path.abspath('__file__'))
 sys.path.append(FILE_DIR)
@@ -57,11 +58,13 @@ class LDAModel(object):
 		self.corpus_ids = [os.path.splitext(os.path.basename(x))[0] for x in corpus]
 		self.dictionary = self.get_dictionary(basepath + '.dict')
 		self.bow = self.get_bow(basepath + '.mm')
-		print('Training...')
-		self.model = gensim.models.LdaModel(self.bow,
-											num_topics=self.num_topics,
-											id2word=self.dictionary,
-											passes=self.passes)
+		cpus = mp.cpu_count()
+		print('Training using ' + str(cpus) + ' cores...')
+		self.model = gensim.models.LdaMulticore(corpus=self.bow,
+												workers=cpus,
+												num_topics=self.num_topics,
+												id2word=self.dictionary,
+												passes=self.passes)
 		return self
 
 	def evaluate(self, triplets):
