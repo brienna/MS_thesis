@@ -19,7 +19,9 @@ absolute_filepaths = {'metadata': root + 'data/metadata.csv',
   					  'archive': root + 'data/archive/',
   					  'corpus': root + 'data/corpus/',
   					  'data': root + 'data/',
-  					  'root': root}
+  					  'root': root,
+  					  'lda': root + 'src/sporc/lda/',
+  					  'doc2vec': root + 'src/sporc/doc2vec/'}
 
 global_variables = {'absolute_filepaths': absolute_filepaths,
 					'start': 2009,
