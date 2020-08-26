@@ -68,10 +68,11 @@ class LDAModel(object):
 		return self
 
 	def evaluate(self, triplets):
-		'''Calculates averaged accuracy of all given triplets,
-		that ab is more similar than ac.'''
+		'''Calculates averaged Hellinger and cosine accuracies of all given triplets, 
+		where papers A & B are more similar than A & C.'''
 		print('Evaluating...')
-		accuracy = 0
+		accuracy_hellinger = 0
+		accuracy_cosine = 0
 		for triplet in triplets:
 			# Get filenames of papers A, B, C
 			a_idx = self.corpus_ids.index(triplet[0])
@@ -83,12 +84,20 @@ class LDAModel(object):
 			b = self.model[self.bow][b_idx]
 			c = self.model[self.bow][c_idx]
 
-			# Calculate accuracy
-			ab_dist = gensim.matutils.hellinger(a, b)
-			ac_dist = gensim.matutils.hellinger(a, c)
-			if ab_dist > ac_dist:
-				accuracy += 1
-		return accuracy/len(triplets)
+			# Calculate Hellinger and cosine distances
+			ab_hellinger = gensim.matutils.hellinger(a, b)
+			ac_hellinger = gensim.matutils.hellinger(a, c)
+			ab_cosine = gensim.matutils.cossim(a, b)
+			ac_cosine = gensim.matutils.cossim(a, c)
+
+			# calculate accuracy for both distances
+			if ab_hellinger > ac_hellinger:
+				accuracy_hellinger += 1
+			if ab_cosine > ac_cosine:
+				accuracy_cosine += 1
+
+		return {'hellinger': accuracy_hellinger/len(triplets),
+				'cosine': accuracy_cosine/len(triplets)}
 
 	class DocumentIterator(object):
 		'''Iterator object that yields corpus file by file,
