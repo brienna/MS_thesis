@@ -38,24 +38,18 @@
 
 # 5 days is the run time MAX, anything over will be KILLED unless you talk with RC
 
-# Request 4 days and 5 hours
+# Request DAYS-HH:MM:SS
 
 #SBATCH -t 2:0:0
 
 #Put the job in the appropriate partition matching the account and request cores (check parameter grid for how many)
 
-#SBATCH -A avxiv -p debug --ntasks=20
-
-#Job membory requirements in MB=m (default), GB=g, or TB=t
-
-#SBATCH --mem=100g
+#SBATCH -A avxiv -p tier3 --ntasks=300 --mem-per-cpu=15g --cpus-per-task=1
 
 ######################################################################
 
 # Load modules
-spack load py-gensim
-spack load py-mpi4py
-spack load py-scikit-learn
+spack env activate avxiv-20091701
 
 # Run 
 srun -n $SLURM_NTASKS --mpi=pmix_v3 python script.py 
